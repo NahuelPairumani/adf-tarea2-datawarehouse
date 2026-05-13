@@ -1,0 +1,104 @@
+{
+	"name": "df_bronze_inventario",
+	"properties": {
+		"folder": {
+			"name": "bronze"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "inventario_xlsx",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "derivedColumn2"
+				},
+				{
+					"name": "derivedColumn3"
+				},
+				{
+					"name": "derivedColumn4"
+				},
+				{
+					"name": "derivedColumn5"
+				},
+				{
+					"name": "derivedColumn6"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          codigo_producto as string,",
+				"          nombre_producto as string,",
+				"          categoria as string,",
+				"          precio_venta as string,",
+				"          costo_adquisicion as string,",
+				"          stock_actual as string,",
+				"          stock_minimo as string,",
+				"          sucursal as string,",
+				"          proveedor as string,",
+				"          ultima_reposicion as string,",
+				"          activo as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> source1",
+				"source1 derive(codigo_producto = trim(codigo_producto),",
+				"          nombre_producto = lower(trim(nombre_producto)),",
+				"          categoria = lower(trim(categoria)),",
+				"          precio_venta = trim(precio_venta),",
+				"          costo_adquisicion = trim(costo_adquisicion),",
+				"          stock_actual = trim(stock_actual),",
+				"          stock_minimo = trim(stock_minimo),",
+				"          sucursal = trim(sucursal),",
+				"          proveedor = trim(proveedor),",
+				"          ultima_reposicion = trim(ultima_reposicion),",
+				"          activo = trim(activo)) ~> derivedColumn1",
+				"derivedColumn1 derive(nombre_producto = initCap(regexReplace(nombre_producto,'\\\\s+',' '))) ~> derivedColumn2",
+				"derivedColumn2 derive(categoria = case(\r",
+				"  in(['computadoras','laptops','pcs'], categoria), 'Computadoras',\r",
+				"  in(['monitores','pantallas'], categoria), 'Monitores',\r",
+				"  in(['perifericos','periféricos'], categoria), 'Perifericos',\r",
+				"  in(['audio','sonido'], categoria), 'Audio',\r",
+				"  in(['tablets','tabletas'], categoria), 'Tablets',\r",
+				"  in(['impresoras','printers'], categoria), 'Impresoras',\r",
+				"  in(['almacenamiento','storage'], categoria), 'Almacenamiento',\r",
+				"  in(['accesorios','acc.'], categoria), 'Accesorios',\r",
+				"  in(['redes','networking'], categoria), 'Redes',\r",
+				"  in(['componentes','hardware'], categoria), 'Componentes',\r",
+				"  categoria\r",
+				")) ~> derivedColumn3",
+				"derivedColumn3 derive(precio_venta = toFloat(regexReplace(toString(precio_venta),'[^0-9.]','')),",
+				"          activo = iif(in(['true', 'si', '1', 'yes'], lower(trim(toString(activo)))), true(), false()),",
+				"          sucursal = case(\r",
+				"    in(['SCZ','Santa Cruz','Sta Cruz','santa cruz','SANTA CRUZ','Sta. Cruz','SC'], sucursal), 'Santa Cruz',\r",
+				"    in(['LPZ','La Paz','la paz','LA PAZ','L.P.','z', 'lapaz'], sucursal), 'La Paz',\r",
+				"    sucursal)\r",
+				") ~> derivedColumn4",
+				"derivedColumn4 derive(ultima_reposicion = coalesce(\r",
+				"    toDate(ultima_reposicion, 'dd \\'de\\' MMMM \\'de\\' yyyy'),\r",
+				"    toDate(ultima_reposicion, 'MMMM dd, yyyy'),\r",
+				"    toDate(ultima_reposicion, 'yyyy-MM-dd'),\r",
+				"    toDate(ultima_reposicion, 'dd-MM-yyyy'),\r",
+				"    toDate(ultima_reposicion, 'MM-dd-yyyy'),\r",
+				"    toDate(ultima_reposicion, 'dd/MM/yyyy'),\r",
+				"    toDate(ultima_reposicion, 'yyyy/MM/dd'),\r",
+				"    toDate(ultima_reposicion, 'dd/MMM/yyyy'),\r",
+				"    toDate(ultima_reposicion, 'dd-MMM-yyyy')\r",
+				")) ~> derivedColumn5",
+				"derivedColumn5 derive(precio_venta = iifNull(precio_venta, 0.0, precio_venta),",
+				"          costo_adquisicion = toFloat(iifNull(costo_adquisicion, \"0.0\", costo_adquisicion))) ~> derivedColumn6"
+			]
+		}
+	}
+}
